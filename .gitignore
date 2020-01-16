@@ -1,0 +1,12 @@
+# Rust build files
+/target
+# rustfmt backup files
+**/*.rs.bk
+# Library so ignore Cargo.lock
+Cargo.lock
+# Other (mostly web) artifacts
+bin/
+pkg/
+dist/
+wasm-pack.log
+node_modules
