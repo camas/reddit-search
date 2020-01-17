@@ -4,15 +4,7 @@ pub struct CommentsData {
     pub data: Vec<CommentData>,
 }
 
-#[derive(
-    Default,
-    yew::Properties,
-    Debug,
-    Clone,
-    PartialEq,
-    serde_derive::Serialize,
-    serde_derive::Deserialize,
-)]
+#[derive(Default, Debug, Clone, PartialEq, serde_derive::Serialize, serde_derive::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CommentData {
     pub author: String,
@@ -23,4 +15,5 @@ pub struct CommentData {
     pub id: String,
     pub score: i64,
     pub subreddit: String,
+    pub permalink: String,
 }

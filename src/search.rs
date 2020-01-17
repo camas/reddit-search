@@ -1,5 +1,4 @@
 use crate::data::{CommentData, CommentsData};
-use anyhow::Error;
 use log::*;
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
