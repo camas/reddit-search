@@ -16,6 +16,10 @@ wasm-bindgen = "^0.2.42"
 yew = "^0.11.0"
 log = "^0.4.8"
 web_logger = "^0.2.0"
+anyhow = "^1.0.26"
+serde = "^1.0.104"
+serde_derive = "^1.0.104"
+serde_json = "^1.0.44"
 
 # Optional to keep production build size down
 console_error_panic_hook = { version = "0.1.6", optional = true }

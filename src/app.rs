@@ -1,3 +1,4 @@
+use crate::search::Search;
 use log::*;
 use yew::{html, Component, ComponentLink, Html, ShouldRender};
 
@@ -18,10 +19,10 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <section>
-                <h1>{"Header"}</h1>
-                <p>{"Hello world!"}</p>
-            </section>
+            <>
+                <h1>{"Reddit Search"}</h1>
+                <Search />
+            </>
         }
     }
 }

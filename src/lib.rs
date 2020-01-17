@@ -3,6 +3,8 @@
 #![recursion_limit = "512"]
 
 mod app;
+mod data;
+mod search;
 
 use wasm_bindgen::prelude::*;
 
