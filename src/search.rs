@@ -64,36 +64,69 @@ impl Component for Search {
                 true
             }
             Msg::SearchSuccess(data) => {
+                self.searching = false;
+                self.comment_data.clear();
                 self.comment_data.extend(data);
                 true
             }
-            Msg::SearchFail(_) => true,
+            Msg::SearchFail(_) => {
+                self.searching = false;
+                true
+            }
         }
     }
 
     fn view(&self) -> Html {
-        let mut lines: String = String::new();
-        for c in self.comment_data.iter().map(|x| x.body.clone()) {
-            lines += "\n";
-            lines.push_str(&c);
-        }
+        let button_text = if self.searching {
+            "Searching..."
+        } else {
+            "Search"
+        };
         html! {
             <>
-                <button onclick=self.link.callback(|_| Msg::DoSearch)>{"Search"}</button>
-                <h3>{"Comments"}</h3>
-                <div>
-                    { for self.comment_data.iter().map(|x| view_comment(x)) }
+            <div class="flex flex-col mx-auto px-1 max-w-3xl pb-1 mb-3">
+                <div class="sm:flex">
+                    <div class="sm:w-1/2">
+                        <label class="block text-xs uppercase font-bold">{"Author"}</label>
+                        <input class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
+                    </div>
+                    <div class="sm:w-1/2 sm:ml-1">
+                        <label class="block text-xs uppercase font-bold">{"Subreddit"}</label>
+                        <input class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
+                    </div>
                 </div>
+                <div>
+                    <label class="block text-xs uppercase font-bold">{"Search Term"}</label>
+                    <input class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
+                </div>
+                <button type={"button"} onclick=self.link.callback(|_| Msg::DoSearch) class="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2 px-4">{button_text}</button>
+            </div>
+            <div class="max-w-5xl m-auto">
+                { for self.comment_data.iter().map(|x| view_comment(x)) }
+            </div>
             </>
         }
     }
 }
 
 fn view_comment(data: &CommentData) -> Html {
+    let naive = chrono::NaiveDateTime::from_timestamp(data.created_utc, 0);
+    let created = chrono::DateTime::<chrono::Utc>::from_utc(naive, chrono::Utc);
+    let time_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
     html! {
-        <>
-            <div>{&data.author}</div>
-            <div>{&data.body}</div>
-        </>
+        <div class="bg-gray-900 mx-1 px-1 mb-1">
+            <div class="flex">
+                <a href={format!("https://reddit.com/r/{}", data.subreddit)}>
+                    <div class="text-sm text-red-500">{format!("/r/{}", data.subreddit)}</div>
+                </a>
+                <a href={format!("https://reddit.com/u/{}", data.author)}>
+                    <div class="text-sm text-red-500 ml-2">{format!("/u/{}", data.author)}</div>
+                </a>
+                <div class="text-sm text-red-500 ml-auto">{time_string}</div>
+            </div>
+            <a href={format!("https://reddit.com{}", data.permalink)}>
+                <div>{&data.body}</div>
+            </a>
+        </div>
     }
 }

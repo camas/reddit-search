@@ -20,7 +20,7 @@ impl Component for App {
     fn view(&self) -> Html {
         html! {
             <>
-                <h1>{"Reddit Search"}</h1>
+                <h1 class="text-red-300 text-center text-5xl">{"Reddit Search"}</h1>
                 <Search />
             </>
         }
