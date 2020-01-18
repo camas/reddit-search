@@ -133,10 +133,7 @@ impl Component for Search {
         } else {
             "Search"
         };
-        let error_str = match &self.last_error {
-            Some(e) => e,
-            None => "",
-        };
+        let error_str = self.last_error.clone().unwrap_or_default();
         html! {
             <>
             <div class="flex flex-col mx-auto px-1 max-w-3xl pb-1 mb-3">
@@ -156,9 +153,13 @@ impl Component for Search {
                 </div>
                 <button type={"button"} onclick=self.link.callback(|_| Msg::DoSearch) class="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2 px-4">{button_text}</button>
             </div>
-            <div class="max-w-5xl m-auto">
-                { for self.comment_data.iter().map(|x| view_comment(x)) }
-            </div>
+            {if self.comment_data.is_empty() { html! {
+                <p class="text-gray-500 text-center">{ "No results" }</p>
+            }} else { html! {
+                <div class="max-w-5xl m-auto">
+                    { for self.comment_data.iter().map(|x| view_comment(x)) }
+                </div>
+            }}}
             <p class="text-red-200 text-center">{ error_str }</p>
             </>
         }
@@ -169,7 +170,7 @@ fn view_comment(data: &CommentData) -> Html {
     let naive = chrono::NaiveDateTime::from_timestamp(data.created_utc, 0);
     let created = chrono::DateTime::<chrono::Utc>::from_utc(naive, chrono::Utc);
     let time_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
-    let permalink = data.permalink.clone().unwrap_or("".to_string());
+    let permalink = data.permalink.clone().unwrap_or_default();
     html! {
         <div class="bg-gray-900 mx-1 px-1 mb-1">
             <div class="flex">
