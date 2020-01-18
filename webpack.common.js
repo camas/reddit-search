@@ -1,6 +1,6 @@
 const path = require('path')
 const WasmPackPlugin = require('@wasm-tool/wasm-pack-plugin')
-const CopyWebpackPlugin = require('copy-webpack-plugin')
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 const distPath = path.resolve(__dirname, 'dist')
 module.exports = (env, argv) => {
@@ -12,17 +12,19 @@ module.exports = (env, argv) => {
     },
     entry: './bootstrap.js',
     output: {
+      // publicPath: '/reddit-search/',
       path: distPath,
       filename: 'reddit-search.js',
       webassemblyModuleFilename: 'reddit-search.wasm'
     },
     plugins: [
-      new CopyWebpackPlugin([
-        { from: './static', to: distPath }
-      ]),
       new WasmPackPlugin({
         crateDirectory: '.',
         extraArgs: '--no-typescript'
+      }),
+      new HtmlWebpackPlugin({
+        title: 'Reddit Search'
+
       })
     ],
     watch: argv.mode !== 'production',
