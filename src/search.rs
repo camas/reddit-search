@@ -14,6 +14,7 @@ pub enum Msg {
     AuthorInput(String),
     SubredditInput(String),
     SearchInput(String),
+    DoMore,
 }
 
 pub struct Search {
@@ -26,10 +27,15 @@ pub struct Search {
     author: Option<String>,
     subreddit: Option<String>,
     search_term: Option<String>,
+    show_more_button: bool,
+    moreing: bool,
+    more_task: Option<FetchTask>,
 }
 
 impl Search {
-    fn search(&mut self) -> FetchTask {
+    /// Creates and runs a request to the pushshift.io api
+    fn search(&mut self, get_more: bool) -> FetchTask {
+        // Create callback
         let callback = self
             .link
             .callback(|resp: Response<Json<Result<CommentsData, _>>>| {
@@ -44,16 +50,26 @@ impl Search {
                     Msg::SearchFail(format!("Error: {}", meta.status))
                 }
             });
+        // Create arg string
         let mut inputs = HashMap::new();
-        inputs.insert("html_decode", "true".to_string());
+        let true_string = String::from("true");
+        inputs.insert("html_decode", &true_string);
         if let Some(author) = &self.author {
-            inputs.insert("author", url_encode(author));
+            inputs.insert("author", author);
         }
         if let Some(subreddit) = &self.subreddit {
-            inputs.insert("subreddit", url_encode(subreddit));
+            inputs.insert("subreddit", subreddit);
         }
         if let Some(search_term) = &self.search_term {
-            inputs.insert("q", url_encode(search_term));
+            inputs.insert("q", search_term);
+        }
+        let created = if self.comment_data.is_empty() {
+            0.to_string()
+        } else {
+            self.comment_data.last().unwrap().created_utc.to_string()
+        };
+        if get_more && !self.comment_data.is_empty() {
+            inputs.insert("before", &created);
         }
         let arg_str = if inputs.is_empty() {
             "".to_string()
@@ -63,10 +79,11 @@ impl Search {
                 if i == 0 {
                     final_args.push('?');
                 }
-                final_args = format!("{}&{}={}", final_args, k, v);
+                final_args = format!("{}&{}={}", final_args, k, url_encode(v));
             }
             final_args
         };
+        // Run request
         let url = format!("https://api.pushshift.io/reddit/comment/search{}", arg_str);
         info!("{}", url);
         let req = Request::get(url).body(Nothing).unwrap();
@@ -89,27 +106,40 @@ impl Component for Search {
             author: None,
             subreddit: None,
             search_term: None,
+            show_more_button: false,
+            moreing: false,
+            more_task: None,
         }
     }
 
     fn update(&mut self, message: Self::Message) -> ShouldRender {
-        info!("{:?}", message);
         match message {
             Msg::DoSearch => {
                 self.searching = true;
-                self.task = Some(self.search());
+                self.task = Some(self.search(false));
+                true
+            }
+            Msg::DoMore => {
+                self.moreing = true;
+                self.more_task = Some(self.search(true));
                 true
             }
             Msg::SearchSuccess(data) => {
                 self.last_error = None;
                 self.searching = false;
-                self.comment_data.clear();
+                self.show_more_button = data.len() == 25;
+                if !self.moreing {
+                    self.comment_data.clear();
+                }
+                self.moreing = false;
                 self.comment_data.extend(data);
                 true
             }
             Msg::SearchFail(err) => {
+                error!("{}", err);
                 self.last_error = Some(err);
                 self.searching = false;
+                self.show_more_button = false;
                 true
             }
             Msg::AuthorInput(d) => {
@@ -133,10 +163,11 @@ impl Component for Search {
         } else {
             "Search"
         };
+        let more_text = if self.moreing { "Moreing..." } else { "More" };
         let error_str = self.last_error.clone().unwrap_or_default();
         html! {
             <>
-            <div class="flex flex-col mx-auto px-1 max-w-3xl pb-1 mb-3">
+            <div class="flex flex-col mx-auto max-w-3xl pb-1 mb-3">
                 <div class="sm:flex">
                     <div class="sm:w-1/2">
                         <label class="block text-xs uppercase font-bold">{"Author"}</label>
@@ -152,15 +183,18 @@ impl Component for Search {
                     <input oninput=self.link.callback(|e: InputData| Msg::SearchInput(e.value)) class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
                 </div>
                 <button type={"button"} onclick=self.link.callback(|_| Msg::DoSearch) class="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2 px-4">{button_text}</button>
+                <p class="text-red-200 text-center">{ error_str }</p>
             </div>
             {if self.comment_data.is_empty() { html! {
                 <p class="text-gray-500 text-center">{ "No results" }</p>
             }} else { html! {
-                <div class="max-w-5xl m-auto">
+                <div class="flex flex-col px-auto max-w-5xl mx-auto">
                     { for self.comment_data.iter().map(|x| view_comment(x)) }
+                { if self.show_more_button { html! {
+                <button type="button" onclick=self.link.callback(|_| Msg::DoMore) class="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{more_text}</button>
+                }} else { html! {}}}
                 </div>
             }}}
-            <p class="text-red-200 text-center">{ error_str }</p>
             </>
         }
     }
@@ -172,7 +206,7 @@ fn view_comment(data: &CommentData) -> Html {
     let time_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
     let permalink = data.permalink.clone().unwrap_or_default();
     html! {
-        <div class="bg-gray-900 mx-1 px-1 mb-1">
+        <div class="bg-gray-900 px-1 mb-1">
             <div class="flex">
                 <a href={format!("https://reddit.com/r/{}", data.subreddit)}>
                     <div class="text-sm text-red-500">{format!("/r/{}", data.subreddit)}</div>
