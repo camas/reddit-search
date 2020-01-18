@@ -14,5 +14,5 @@ pub struct CommentData {
     pub id: String,
     pub score: i64,
     pub subreddit: String,
-    pub permalink: String,
+    pub permalink: Option<String>,
 }

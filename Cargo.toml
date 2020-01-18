@@ -20,6 +20,7 @@ serde = "^1.0.104"
 serde_derive = "^1.0.104"
 serde_json = "^1.0.44"
 chrono = "^0.4.10"
+percent-encoding = "^2.1.0"
 
 # Optional to keep production build size down
 console_error_panic_hook = { version = "0.1.6", optional = true }
