@@ -15,6 +15,8 @@ struct SearchOptions {
     subreddit: Option<String>,
     search_term: Option<String>,
     search_type: Option<SearchType>,
+    num_returned: Option<u32>,
+    score_filter: Option<String>,
 }
 
 impl SearchOptions {
@@ -24,6 +26,8 @@ impl SearchOptions {
             subreddit: None,
             search_term: None,
             search_type: Some(SearchType::Comments),
+            num_returned: Some(100),
+            score_filter: None,
         }
     }
 }
@@ -53,6 +57,8 @@ pub enum Msg {
     SearchInput(String),
     DoMore,
     SearchTypeInput(SearchType),
+    ScoreFilterInput(String),
+    NumReturnedInput(u32),
 }
 
 pub struct Search {
@@ -86,6 +92,14 @@ impl Search {
         }
         if let Some(search_term) = &self.used_options.search_term {
             inputs.insert("q", &search_term);
+        }
+        let num_str;
+        if let Some(num_returned) = &self.used_options.num_returned {
+            num_str = num_returned.to_string();
+            inputs.insert("size", &num_str);
+        }
+        if let Some(score_filter) = &self.used_options.score_filter {
+            inputs.insert("score", &score_filter);
         }
         let created = if self.entry_data.is_empty() {
             0.to_string()
@@ -200,7 +214,7 @@ impl Component for Search {
             Msg::SearchSuccess(data) => {
                 self.last_error = None;
                 self.searching = false;
-                self.show_more_button = data.len() == 25;
+                self.show_more_button = !data.is_empty();
                 if !self.moreing {
                     self.entry_data.clear();
                 }
@@ -229,7 +243,15 @@ impl Component for Search {
             }
             Msg::SearchTypeInput(d) => {
                 self.options.search_type = Some(d);
-                true
+                false
+            }
+            Msg::ScoreFilterInput(d) => {
+                self.options.score_filter = Some(d);
+                false
+            }
+            Msg::NumReturnedInput(d) => {
+                self.options.num_returned = Some(d);
+                false
             }
         }
     }
@@ -255,17 +277,27 @@ impl Component for Search {
                         <input oninput=self.link.callback(|e: InputData| Msg::SubredditInput(e.value)) class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
                     </div>
                 </div>
-                <div>
-                    <label class="block text-xs uppercase font-bold">{"Search for"}</label>
-                    <div class="relative" id="select-type">
-                        <Select<SearchType>
-                            selected=self.options.search_type.clone()
-                            options=SearchType::iter().collect::<Vec<_>>()
-                            onchange=self.link.callback(Msg::SearchTypeInput)
-                        />
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                <div class="sm:flex">
+                    <div class="sm:w-1/3">
+                        <label class="block text-xs uppercase font-bold">{"Search for"}</label>
+                        <div class="relative" id="select-type">
+                            <Select<SearchType>
+                                selected=self.options.search_type.clone()
+                                options=SearchType::iter().collect::<Vec<_>>()
+                                onchange=self.link.callback(Msg::SearchTypeInput)
+                            />
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                            </div>
                         </div>
+                    </div>
+                    <div class="sm:w-1/3 sm:ml-1">
+                        <label class="block text-xs uppercase font-bold">{"Num. Returned"}</label>
+                        <input oninput=self.link.callback(|e: InputData| Msg::NumReturnedInput(e.value.parse().unwrap())) class="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" type="number" min="25" step="25" value="100" />
+                    </div>
+                    <div class="sm:w-1/3 sm:ml-1">
+                        <label class="block text-xs uppercase font-bold">{"Score Filter"}</label>
+                        <input oninput=self.link.callback(|e: InputData| Msg::ScoreFilterInput(e.value)) class="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" placeholder="e.g. >10 <100 >100,<900" />
                     </div>
                 </div>
                 <div>
