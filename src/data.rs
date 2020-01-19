@@ -72,6 +72,30 @@ pub struct PostData {
     pub score: i64,
     pub subreddit: String,
     pub permalink: Option<String>,
+    pub thumbnail: Option<String>,
+}
+
+impl PostData {
+    fn view_thumbnail(&self) -> Html {
+        if let Some(thumbnail) = &self.thumbnail {
+            if thumbnail.starts_with("http") {
+                return html! {
+                    <div class="mr-1 mb-1 w-32 h-32 overflow-hidden flex-shrink-0">
+                        <img class="w-full h-full object-cover" src={thumbnail} />
+                    </div>
+                };
+            }
+        }
+        let extension = extension(&self.url);
+        if extension == ".png" || extension == ".jpg" {
+            return html! {
+                <div class="mr-1 mb-1 w-32 h-32 overflow-hidden flex-shrink-0">
+                    <img class="w-full h-full object-cover" src={&self.url} />
+                </div>
+            };
+        }
+        html! {}
+    }
 }
 
 impl Entry for PostData {
@@ -91,24 +115,38 @@ impl Entry for PostData {
                     </a>
                     <div class="text-sm text-red-500 ml-auto">{time_string}</div>
                 </div>
-                <a href={format!("https://reddit.com{}", permalink)}>
-                    <div class="font-bold">{&self.title}</div>
-                </a>
-                { if self.selftext.len() > 0 {
-                    html! {
-                        <div class="whitespace-pre-wrap">{ &self.selftext }</div>
-                    }
-                } else {
-                    html! {
-                        <a href={ format!("{}", &self.url) }>
-                            <div>{ &self.url }</div>
+                <div class="flex">
+                    { self.view_thumbnail() }
+                    <div>
+                        <a href={format!("https://reddit.com{}", permalink)}>
+                            <div class="font-bold">{&self.title}</div>
                         </a>
-                    }
-                }}
+                        { if self.selftext.len() > 0 {
+                            html! {
+                                <div class="whitespace-pre-wrap">{ &self.selftext }</div>
+                            }
+                        } else {
+                            html! {
+                                <a href={ format!("{}", &self.url) }>
+                                    <div>{ &self.url }</div>
+                                </a>
+                            }
+                        }}
+                    </div>
+                </div>
             </div>
         }
     }
+
     fn get_created(&self) -> i64 {
         self.created_utc
     }
+}
+
+fn extension(filename: &str) -> &str {
+    filename
+        .rfind('.')
+        .map(|idx| &filename[idx..])
+        .filter(|ext| ext.chars().skip(1).all(|c| c.is_ascii_alphanumeric()))
+        .unwrap_or("")
 }
