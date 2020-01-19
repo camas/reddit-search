@@ -1383,7 +1383,7 @@ debug@2.6.9, debug@^2.2.0, debug@^2.3.3:
   dependencies:
     ms "2.0.0"
 
-debug@^3.0.0, debug@^3.1.1, debug@^3.2.5:
+debug@^3.0.0, debug@^3.1.0, debug@^3.1.1, debug@^3.2.5:
   version "3.2.6"
   resolved "https://registry.yarnpkg.com/debug/-/debug-3.2.6.tgz#e83d17de16d8a7efb7717edbe5fb10135eee629b"
   integrity sha512-mel+jf7nrtEl5Pn1Qx46zARXKDpBbvzezse7p7LqINmdoIk8PYP5SySaxEmYv6TZ0JyEKA1hsCId6DIhgITtWQ==
@@ -4128,6 +4128,22 @@ postcss-image-set-function@^3.0.1:
   dependencies:
     postcss "^7.0.2"
     postcss-values-parser "^2.0.0"
+
+postcss-inherit-parser@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/postcss-inherit-parser/-/postcss-inherit-parser-0.2.0.tgz#661af4b77fa6c0005dd4ae76c4710d5a756210a7"
+  integrity sha512-XL3QoYrPh+PQqIc4N3x1y0AEcXjG4gjAF+6kvD/vXNmIQRQ1Ck25Z6dyYY7clx6jrG5nlg3v+max6mzoH+K26g==
+  dependencies:
+    postcss "^6.0.22"
+
+postcss-inherit@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/postcss-inherit/-/postcss-inherit-4.1.0.tgz#54268633ec137700e72c9eb40ea961571db4d61b"
+  integrity sha512-BI3Dme4twf9uk4LInRtG3NKo3eTmfywXmazVqFvQdVHUb5qlnGItXzUTEj0ihqxpoo1u4bA1lEro3C6+UQxdvg==
+  dependencies:
+    debug "^3.1.0"
+    postcss "^6.0.22"
+    postcss-inherit-parser "^0.2.0"
 
 postcss-initial@^3.0.0:
   version "3.0.2"

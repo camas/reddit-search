@@ -1,20 +1,39 @@
-use crate::data::{CommentData, CommentsData};
+use crate::data::{CommentData, CommentsData, Entry, PostData, PostsData};
 use log::*;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use std::collections::HashMap;
+use strum::IntoEnumIterator;
+use strum_macros::{Display, EnumIter, EnumString};
+use yew::components::Select;
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender};
 
+#[derive(Clone, Debug, Display, EnumString, EnumIter, PartialEq)]
+pub enum SearchType {
+    Posts,
+    Comments,
+}
+
+impl SearchType {
+    fn to_endpoint(&self) -> String {
+        match self {
+            SearchType::Posts => "submission".to_string(),
+            SearchType::Comments => "comment".to_string(),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum Msg {
     DoSearch,
-    SearchSuccess(Vec<CommentData>),
+    SearchSuccess(Vec<Box<dyn Entry>>),
     SearchFail(String),
     AuthorInput(String),
     SubredditInput(String),
     SearchInput(String),
     DoMore,
+    SearchTypeInput(SearchType),
 }
 
 pub struct Search {
@@ -22,7 +41,7 @@ pub struct Search {
     link: ComponentLink<Self>,
     task: Option<FetchTask>,
     searching: bool,
-    comment_data: Vec<CommentData>,
+    entry_data: Vec<Box<dyn Entry>>,
     last_error: Option<String>,
     author: Option<String>,
     subreddit: Option<String>,
@@ -30,26 +49,14 @@ pub struct Search {
     show_more_button: bool,
     moreing: bool,
     more_task: Option<FetchTask>,
+    search_type: Option<SearchType>,
 }
 
 impl Search {
     /// Creates and runs a request to the pushshift.io api
     fn search(&mut self, get_more: bool) -> FetchTask {
         // Create callback
-        let callback = self
-            .link
-            .callback(|resp: Response<Json<Result<CommentsData, _>>>| {
-                let (meta, Json(data)) = resp.into_parts();
-                info!("Response from pushshift");
-                if meta.status.is_success() {
-                    match data {
-                        Ok(d) => Msg::SearchSuccess(d.data),
-                        Err(e) => Msg::SearchFail(format!("{}", e)),
-                    }
-                } else {
-                    Msg::SearchFail(format!("Error: {}", meta.status))
-                }
-            });
+        let search_type = self.search_type.clone().unwrap();
         // Create arg string
         let mut inputs = HashMap::new();
         let true_string = String::from("true");
@@ -63,12 +70,12 @@ impl Search {
         if let Some(search_term) = &self.search_term {
             inputs.insert("q", search_term);
         }
-        let created = if self.comment_data.is_empty() {
+        let created = if self.entry_data.is_empty() {
             0.to_string()
         } else {
-            self.comment_data.last().unwrap().created_utc.to_string()
+            self.entry_data.last().unwrap().get_created().to_string()
         };
-        if get_more && !self.comment_data.is_empty() {
+        if get_more && !self.entry_data.is_empty() {
             inputs.insert("before", &created);
         }
         let arg_str = if inputs.is_empty() {
@@ -84,10 +91,59 @@ impl Search {
             final_args
         };
         // Run request
-        let url = format!("https://api.pushshift.io/reddit/comment/search{}", arg_str);
+        let endpoint = search_type.to_endpoint();
+        let url = format!(
+            "https://api.pushshift.io/reddit/{}/search{}",
+            endpoint, arg_str
+        );
         info!("{}", url);
         let req = Request::get(url).body(Nothing).unwrap();
-        self.fetch_service.fetch(req, callback)
+        match search_type {
+            SearchType::Comments => {
+                let callback =
+                    self.link
+                        .callback(|resp: Response<Json<Result<CommentsData, _>>>| {
+                            let (meta, Json(data)) = resp.into_parts();
+                            info!("Response from pushshift");
+                            if meta.status.is_success() {
+                                match data {
+                                    Ok(d) => Msg::SearchSuccess(
+                                        d.data
+                                            .into_iter()
+                                            .map(|x| Box::new(x) as Box<dyn Entry>)
+                                            .collect(),
+                                    ),
+                                    Err(e) => Msg::SearchFail(format!("{}", e)),
+                                }
+                            } else {
+                                Msg::SearchFail(format!("Error: {}", meta.status))
+                            }
+                        });
+                self.fetch_service.fetch(req, callback)
+            }
+            SearchType::Posts => {
+                let callback = self
+                    .link
+                    .callback(|resp: Response<Json<Result<PostsData, _>>>| {
+                        let (meta, Json(data)) = resp.into_parts();
+                        info!("Response from pushshift");
+                        if meta.status.is_success() {
+                            match data {
+                                Ok(d) => Msg::SearchSuccess(
+                                    d.data
+                                        .into_iter()
+                                        .map(|x| Box::new(x) as Box<dyn Entry>)
+                                        .collect(),
+                                ),
+                                Err(e) => Msg::SearchFail(format!("{}", e)),
+                            }
+                        } else {
+                            Msg::SearchFail(format!("Error: {}", meta.status))
+                        }
+                    });
+                self.fetch_service.fetch(req, callback)
+            }
+        }
     }
 }
 
@@ -101,7 +157,7 @@ impl Component for Search {
             link,
             searching: false,
             task: None,
-            comment_data: Vec::new(),
+            entry_data: Vec::new(),
             last_error: None,
             author: None,
             subreddit: None,
@@ -109,6 +165,7 @@ impl Component for Search {
             show_more_button: false,
             moreing: false,
             more_task: None,
+            search_type: Some(SearchType::Comments),
         }
     }
 
@@ -129,10 +186,10 @@ impl Component for Search {
                 self.searching = false;
                 self.show_more_button = data.len() == 25;
                 if !self.moreing {
-                    self.comment_data.clear();
+                    self.entry_data.clear();
                 }
                 self.moreing = false;
-                self.comment_data.extend(data);
+                self.entry_data.extend(data);
                 true
             }
             Msg::SearchFail(err) => {
@@ -153,6 +210,10 @@ impl Component for Search {
             Msg::SearchInput(d) => {
                 self.search_term = Some(d);
                 false
+            }
+            Msg::SearchTypeInput(d) => {
+                self.search_type = Some(d);
+                true
             }
         }
     }
@@ -179,17 +240,30 @@ impl Component for Search {
                     </div>
                 </div>
                 <div>
+                    <label class="block text-xs uppercase font-bold">{"Search for"}</label>
+                    <div class="relative" id="select-type">
+                        <Select<SearchType>
+                            selected=self.search_type.clone()
+                            options=SearchType::iter().collect::<Vec<_>>()
+                            onchange=self.link.callback(Msg::SearchTypeInput)
+                        />
+                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+                </div>
+                <div>
                     <label class="block text-xs uppercase font-bold">{"Search Term"}</label>
                     <input oninput=self.link.callback(|e: InputData| Msg::SearchInput(e.value)) class="text-gray-900 bg-gray-400 focus:bg-gray-100 w-full py-2 px-1" />
                 </div>
                 <button type={"button"} onclick=self.link.callback(|_| Msg::DoSearch) class="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2 px-4">{button_text}</button>
                 <p class="text-red-200 text-center">{ error_str }</p>
             </div>
-            {if self.comment_data.is_empty() { html! {
+            {if self.entry_data.is_empty() { html! {
                 <p class="text-gray-500 text-center">{ "No results" }</p>
             }} else { html! {
                 <div class="flex flex-col px-auto max-w-5xl mx-auto">
-                    { for self.comment_data.iter().map(|x| view_comment(x)) }
+                    { for self.entry_data.iter().map(|x| x.view()) }
                 { if self.show_more_button { html! {
                 <button type="button" onclick=self.link.callback(|_| Msg::DoMore) class="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{more_text}</button>
                 }} else { html! {}}}
@@ -197,29 +271,6 @@ impl Component for Search {
             }}}
             </>
         }
-    }
-}
-
-fn view_comment(data: &CommentData) -> Html {
-    let naive = chrono::NaiveDateTime::from_timestamp(data.created_utc, 0);
-    let created = chrono::DateTime::<chrono::Utc>::from_utc(naive, chrono::Utc);
-    let time_string = created.format("%Y-%m-%d %H:%M:%S").to_string();
-    let permalink = data.permalink.clone().unwrap_or_default();
-    html! {
-        <div class="bg-gray-900 px-1 mb-1">
-            <div class="flex">
-                <a href={format!("https://reddit.com/r/{}", data.subreddit)}>
-                    <div class="text-sm text-red-500">{format!("/r/{}", data.subreddit)}</div>
-                </a>
-                <a href={format!("https://reddit.com/u/{}", data.author)}>
-                    <div class="text-sm text-red-500 ml-2">{format!("/u/{}", data.author)}</div>
-                </a>
-                <div class="text-sm text-red-500 ml-auto">{time_string}</div>
-            </div>
-            <a href={format!("https://reddit.com{}", permalink)}>
-                <div class="whitespace-pre-wrap">{&data.body}</div>
-            </a>
-        </div>
     }
 }
 

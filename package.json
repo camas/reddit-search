@@ -16,6 +16,7 @@
     "cssnano": "^4.1.10",
     "gh-pages": "^2.2.0",
     "html-webpack-plugin": "^3.2.0",
+    "postcss-inherit": "^4.1.0",
     "postcss-loader": "^3.0.0",
     "precss": "^4.0.0",
     "style-loader": "^1.1.2",
