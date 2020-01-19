@@ -1,4 +1,4 @@
-use crate::data::{CommentData, CommentsData, Entry, PostData, PostsData};
+use crate::data::{CommentsData, Entry, PostsData};
 use log::*;
 use percent_encoding::{utf8_percent_encode, AsciiSet, CONTROLS};
 use std::collections::HashMap;
@@ -8,6 +8,25 @@ use yew::components::Select;
 use yew::format::{Json, Nothing};
 use yew::services::fetch::{FetchService, FetchTask, Request, Response};
 use yew::{html, Component, ComponentLink, Html, InputData, ShouldRender};
+
+#[derive(Clone)]
+struct SearchOptions {
+    author: Option<String>,
+    subreddit: Option<String>,
+    search_term: Option<String>,
+    search_type: Option<SearchType>,
+}
+
+impl SearchOptions {
+    fn new() -> Self {
+        SearchOptions {
+            author: None,
+            subreddit: None,
+            search_term: None,
+            search_type: Some(SearchType::Comments),
+        }
+    }
+}
 
 #[derive(Clone, Debug, Display, EnumString, EnumIter, PartialEq)]
 pub enum SearchType {
@@ -43,32 +62,30 @@ pub struct Search {
     searching: bool,
     entry_data: Vec<Box<dyn Entry>>,
     last_error: Option<String>,
-    author: Option<String>,
-    subreddit: Option<String>,
-    search_term: Option<String>,
     show_more_button: bool,
     moreing: bool,
     more_task: Option<FetchTask>,
-    search_type: Option<SearchType>,
+    options: SearchOptions,
+    used_options: SearchOptions,
 }
 
 impl Search {
     /// Creates and runs a request to the pushshift.io api
     fn search(&mut self, get_more: bool) -> FetchTask {
         // Create callback
-        let search_type = self.search_type.clone().unwrap();
+        let search_type = self.used_options.search_type.clone().unwrap();
         // Create arg string
         let mut inputs = HashMap::new();
         let true_string = String::from("true");
         inputs.insert("html_decode", &true_string);
-        if let Some(author) = &self.author {
-            inputs.insert("author", author);
+        if let Some(author) = &self.used_options.author {
+            inputs.insert("author", &author);
         }
-        if let Some(subreddit) = &self.subreddit {
-            inputs.insert("subreddit", subreddit);
+        if let Some(subreddit) = &self.used_options.subreddit {
+            inputs.insert("subreddit", &subreddit);
         }
-        if let Some(search_term) = &self.search_term {
-            inputs.insert("q", search_term);
+        if let Some(search_term) = &self.used_options.search_term {
+            inputs.insert("q", &search_term);
         }
         let created = if self.entry_data.is_empty() {
             0.to_string()
@@ -159,13 +176,11 @@ impl Component for Search {
             task: None,
             entry_data: Vec::new(),
             last_error: None,
-            author: None,
-            subreddit: None,
-            search_term: None,
             show_more_button: false,
             moreing: false,
             more_task: None,
-            search_type: Some(SearchType::Comments),
+            options: SearchOptions::new(),
+            used_options: SearchOptions::new(),
         }
     }
 
@@ -173,6 +188,7 @@ impl Component for Search {
         match message {
             Msg::DoSearch => {
                 self.searching = true;
+                self.used_options = self.options.clone();
                 self.task = Some(self.search(false));
                 true
             }
@@ -200,19 +216,19 @@ impl Component for Search {
                 true
             }
             Msg::AuthorInput(d) => {
-                self.author = Some(d);
+                self.options.author = Some(d);
                 false
             }
             Msg::SubredditInput(d) => {
-                self.subreddit = Some(d);
+                self.options.subreddit = Some(d);
                 false
             }
             Msg::SearchInput(d) => {
-                self.search_term = Some(d);
+                self.options.search_term = Some(d);
                 false
             }
             Msg::SearchTypeInput(d) => {
-                self.search_type = Some(d);
+                self.options.search_type = Some(d);
                 true
             }
         }
@@ -243,7 +259,7 @@ impl Component for Search {
                     <label class="block text-xs uppercase font-bold">{"Search for"}</label>
                     <div class="relative" id="select-type">
                         <Select<SearchType>
-                            selected=self.search_type.clone()
+                            selected=self.options.search_type.clone()
                             options=SearchType::iter().collect::<Vec<_>>()
                             onchange=self.link.callback(Msg::SearchTypeInput)
                         />
