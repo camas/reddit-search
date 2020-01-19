@@ -92,7 +92,7 @@ impl Entry for PostData {
                     <div class="text-sm text-red-500 ml-auto">{time_string}</div>
                 </div>
                 <a href={format!("https://reddit.com{}", permalink)}>
-                    <div class="text-red-600">{&self.title}</div>
+                    <div class="font-bold">{&self.title}</div>
                 </a>
                 { if self.selftext.len() > 0 {
                     html! {
