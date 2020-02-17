@@ -85,6 +85,7 @@ export class App extends React.Component<{}, AppState> {
     this.setState({ query: e.target.value });
   }
 
+  /** Handle the main form being submitted */
   searchSubmit = async (e) => {
     e.preventDefault();
     this.setState({ error: null, comments: null, posts: null, searching: true });
@@ -97,6 +98,7 @@ export class App extends React.Component<{}, AppState> {
     }
   }
 
+  /** Handle the more button being clicked. */
   handleMoreClick = async (e) => {
     this.setState({ error: null, moreing: true });
     if (this.state.comments) {
@@ -118,8 +120,12 @@ export class App extends React.Component<{}, AppState> {
   render(): React.ReactNode {
     let moreButton = <button type="button" onClick={this.handleMoreClick} className="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{this.state.moreing ? "Moreing..." : "More"}</button>;
     let content;
+    let resultCount;
+    let inner;
     if (this.state.comments) {
-      let inner = this.state.comments.map((comment) => {
+      resultCount = this.state.comments.length;
+      // Render comments
+      inner = this.state.comments.map((comment) => {
         let permalink;
         if (comment.permalink) {
           permalink = comment.permalink;
@@ -141,12 +147,10 @@ export class App extends React.Component<{}, AppState> {
           </a>
         </div>
       });
-      content = <div className="flex flex-col px-auto max-w-5xl mx-auto">
-        {inner}
-        {moreButton}
-      </div>
     } else if (this.state.posts) {
-      let inner = this.state.posts.map((post) => {
+      resultCount = this.state.posts.length;
+      // Render posts
+      inner = this.state.posts.map((post) => {
         let thumbnailUrl;
         if (post.thumbnail.startsWith('http')) {
           thumbnailUrl = post.thumbnail;
@@ -184,11 +188,15 @@ export class App extends React.Component<{}, AppState> {
           </div>
         </div>
       });
+    }
+    if (this.state.comments || this.state.posts) {
       content = <div className="flex flex-col px-auto max-w-5xl mx-auto">
+        <div className="mx-auto mb-1">{resultCount} results</div>
         {inner}
         {moreButton}
       </div>
     }
+    // Combine everything and return
     return (
       <>
         <form onSubmit={this.searchSubmit} className="flex flex-col mx-auto max-w-3xl pb-1 mb-3">
