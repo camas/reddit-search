@@ -8,11 +8,15 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "dev": "parcel src/index.html"
+    "dev": "parcel src/index.html",
+    "build": "parcel build src/index.html",
+    "dist": "rm -r ./dist && parcel build --public-url ./reddit-search/ src/index.html && gh-pages -d dist"
   },
   "devDependencies": {
     "@types/react": "^16.9.19",
     "@types/react-dom": "^16.9.5",
+    "cssnano": "^4.1.10",
+    "gh-pages": "^2.2.0",
     "tailwindcss": "^1.2.0",
     "typescript": "^3.7.5"
   },
