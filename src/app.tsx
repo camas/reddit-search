@@ -116,10 +116,16 @@ export class App extends React.Component<{}, AppState> {
    * @return {React.ReactNode} The react node for the app
    */
   render(): React.ReactNode {
-    let moreButton = <button type="button" onClick={this.handleMoreClick} className="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{this.state.moreing ? "More..." : "More"}</button>;
+    let moreButton = <button type="button" onClick={this.handleMoreClick} className="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{this.state.moreing ? "Moreing..." : "More"}</button>;
     let content;
     if (this.state.comments) {
       let inner = this.state.comments.map((comment) => {
+        let permalink;
+        if (comment.permalink) {
+          permalink = comment.permalink;
+        } else {
+          permalink = `/comments/${comment.link_id.split('_')[1]}/_/${comment.id}`
+        }
         return <div className="bg-gray-900 px-1 mb-1" key={comment.id}>
           <div className="flex">
             <a href={`https://reddit.com/r/${comment.subreddit}`}>
@@ -130,7 +136,7 @@ export class App extends React.Component<{}, AppState> {
             </a>
             <div className="text-sm text-red-500 ml-auto">{new Date(comment.created_utc * 1000).toLocaleString()}</div>
           </div>
-          <a href={`https://reddit.com${comment.permalink}`}>
+          <a href={`https://reddit.com${permalink}`}>
             <div className="whitespace-pre-wrap">{comment.body}</div>
           </a>
         </div>
@@ -170,7 +176,7 @@ export class App extends React.Component<{}, AppState> {
               <img className="w-full h-full object-cover" src={thumbnailUrl} />
             </div>
             <div>
-              <a href={`https://reddit.com${post.permalink}`}>
+              <a href={`https://reddit.com/${post.id}`}>
                 <div className="font-bold">{post.title}</div>
               </a>
               {body}
