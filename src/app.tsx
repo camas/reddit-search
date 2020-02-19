@@ -4,6 +4,7 @@ import { PushshiftAPI, SearchSettings, SearchType } from './api'
 import { GithubLink } from './github-link'
 
 import "react-datepicker/dist/react-datepicker.css";
+import { RandomLink } from './random-link';
 
 interface AppState extends SearchSettings {
   error: string,
@@ -119,7 +120,9 @@ export class App extends React.Component<{}, AppState> {
    * @return {React.ReactNode} The react node for the app
    */
   render(): React.ReactNode {
+    // Not tidy at all but it's a one page app so WONTFIX
     let moreButton = <button type="button" onClick={this.handleMoreClick} className="bg-red-900 hover:bg-red-800 font-bold py-2 mb-1">{this.state.moreing ? "Moreing..." : "More"}</button>;
+    let linkClass = "text-blue-400 hover:text-blue-600";
     let content;
     let resultCount;
     let inner;
@@ -195,6 +198,10 @@ export class App extends React.Component<{}, AppState> {
         <div className="mx-auto mb-1">{resultCount} results</div>
         {inner}
         {moreButton}
+      </div>
+    } else {
+      content = <div className="text-center">
+        <p>Search reddit using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>. For more advanced searches you can directly query the API <a className={linkClass} href="https://api.pushshift.io/reddit/comment/search?distinguished=admin&q=howdy&subreddit=!ModSupport">fairly easily</a>.</p>
       </div>
     }
     // Combine everything and return
@@ -278,6 +285,7 @@ export class App extends React.Component<{}, AppState> {
           }
         </form>
         {content}
+        <div className="pb-2 pt-4 text-center"><RandomLink /></div>
       </>
     );
   }
