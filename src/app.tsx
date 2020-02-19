@@ -1,6 +1,7 @@
 import * as React from 'react';
 import DatePicker from 'react-datepicker'
 import { PushshiftAPI, SearchSettings, SearchType } from './api'
+import { GithubLink } from './github-link'
 
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -199,6 +200,7 @@ export class App extends React.Component<{}, AppState> {
     // Combine everything and return
     return (
       <>
+        <GithubLink />
         <form onSubmit={this.searchSubmit} className="flex flex-col mx-auto max-w-3xl pb-1 mb-3">
           {/* Author and Subreddit */}
           <div className="sm:flex">
