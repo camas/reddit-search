@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "parcel src/index.html",
     "build": "parcel build src/index.html",
-    "dist": "rm -r ./dist && parcel build --public-url ./ src/index.html && gh-pages -d dist"
+    "dist": "rm -r ./dist && parcel build --public-url ./ src/index.html && export $(cat .env | xargs) && gh-pages --dist ./dist --repo https://$GH_TOKEN@github.com/camas/reddit-search.git"
   },
   "devDependencies": {
     "@types/react": "^16.9.19",
