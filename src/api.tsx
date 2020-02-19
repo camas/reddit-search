@@ -4,11 +4,11 @@ export enum SearchType {
 }
 
 export interface SearchSettings {
-  author: string;
-  subreddit: string;
-  searchFor: SearchType;
-  resultSize: number;
-  filter: string;
+  author: string,
+  subreddit: string,
+  searchFor: SearchType,
+  resultSize: number,
+  filter: string,
   after: Date,
   before: Date,
   query: string,

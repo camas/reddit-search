@@ -41,6 +41,37 @@ export class App extends React.Component<{}, AppState> {
     this.api = new PushshiftAPI();
   }
 
+  componentDidMount() {
+    // Load stored form data
+    let formDataJson = localStorage.getItem("search-form");
+    if (formDataJson !== null) {
+      let formData: SearchSettings = JSON.parse(formDataJson);
+      // Reconstruct `Date`s
+      if (formData.after) {
+        formData.after = new Date(formData.after);
+      }
+      if (formData.before) {
+        formData.before = new Date(formData.before);
+      }
+      this.setState(formData);
+      console.log(formData);
+    }
+  }
+
+  componentDidUpdate() {
+    let toSave: SearchSettings = {
+      author: this.state.author,
+      subreddit: this.state.subreddit,
+      searchFor: this.state.searchFor,
+      resultSize: this.state.resultSize,
+      filter: this.state.filter,
+      after: this.state.after,
+      before: this.state.before,
+      query: this.state.query,
+    };
+    localStorage.setItem("search-form", JSON.stringify(toSave));
+  }
+
   setError = (error: string) => {
     this.setState({ error: error, errorTime: new Date() });
   }
@@ -200,9 +231,10 @@ export class App extends React.Component<{}, AppState> {
         {moreButton}
       </div>
     } else {
-      content = <div className="text-center">
+      content = <div className="text-center px-4 max-w-5xl mx-auto">
         <p>Search reddit using the <a className={linkClass} href="https://pushshift.io/">pushshift.io API</a>. For more advanced searches you can directly query the API <a className={linkClass} href="https://api.pushshift.io/reddit/comment/search?distinguished=admin&q=howdy&subreddit=!ModSupport">fairly easily</a>.</p>
-      </div>
+        <p>The 'More' button works by changing the 'before' value to the time of the last post in the results. <em>This means that entries might be missed if they were posted at the same time.</em></p>
+      </div >
     }
     // Combine everything and return
     return (
@@ -213,11 +245,11 @@ export class App extends React.Component<{}, AppState> {
           <div className="sm:flex">
             <div className="sm:w-1/2">
               <label className="block text-xs uppercase font-bold">Author</label>
-              <input onChange={this.handleAuthorChange} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
+              <input onChange={this.handleAuthorChange} value={this.state.author} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
             </div>
             <div className="sm:w-1/2 sm:ml-1">
               <label className="block text-xs uppercase font-bold">Subreddit</label>
-              <input onChange={this.handleSubredditChange} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
+              <input onChange={this.handleSubredditChange} value={this.state.subreddit} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
             </div>
           </div>
           {/* Type, Count and Score Filter */}
@@ -225,7 +257,7 @@ export class App extends React.Component<{}, AppState> {
             <div className="sm:w-1/3">
               <label className="block text-xs uppercase font-bold">Search for</label>
               <div className="relative">
-                <select onChange={this.handleSearchTypeChange} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1 appearance-none">
+                <select onChange={this.handleSearchTypeChange} value={this.state.searchFor === SearchType.Comments ? "Comments" : "Posts"} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1 appearance-none">
                   <option>Comments</option>
                   <option>Posts</option>
                 </select>
@@ -241,7 +273,7 @@ export class App extends React.Component<{}, AppState> {
             </div>
             <div className="sm:w-1/3 sm:ml-1">
               <label className="block text-xs uppercase font-bold">Score Filter</label>
-              <input onChange={this.handleFilterChange} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" placeholder="e.g. >10 <100 >100,<900" />
+              <input onChange={this.handleFilterChange} value={this.state.filter} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" placeholder="e.g. >10 <100 >100,<900" />
             </div>
           </div>
           {/* Time Range */}
@@ -276,7 +308,7 @@ export class App extends React.Component<{}, AppState> {
           {/* Search Term */}
           <div>
             <label className="block text-xs uppercase font-bold">Search Term</label>
-            <input onChange={this.handleQueryChange} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
+            <input onChange={this.handleQueryChange} value={this.state.query} className="text-gray-900 bg-gray-300 focus:bg-gray-100 w-full py-2 px-1" />
           </div>
           {/* Submit Button and Error text */}
           <button type="submit" className="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2">{this.state.searching ? "Searching..." : "Search"}</button>
