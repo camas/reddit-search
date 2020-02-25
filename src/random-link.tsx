@@ -13,6 +13,7 @@ export class RandomLink extends React.Component {
     ["The Great Trolley Problem Dump", "https://imgur.com/gallery/QXF8B"],
     ["Cities of the Future", "https://www.nationalgeographic.com/magazine/2019/04/see-sustainable-future-city-designed-for-people-and-nature/"],
     ["Buy a stock, wait until it goes up, and then sell it. If it doesn't go up, then don't have bought it.", "text"],
+    ["https://pbs.twimg.com/media/EQvo8N-UcAEyZcx?format=png"],
   ];
 
   static entry = RandomLink.links[Math.floor(Math.random() * RandomLink.links.length)];
