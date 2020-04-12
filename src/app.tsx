@@ -372,6 +372,7 @@ export class App extends React.Component<{}, AppState> {
   }
 }
 
+// https://gist.github.com/jokester/4a543ea76dbc5ae1bf05
 var hash_accessor = (function (window) {
   return {
     load: function () {
@@ -387,7 +388,7 @@ var hash_accessor = (function (window) {
     },
     save: function (obj) {
       // use replace so that previous url does not go into history
-      window.location.replace('#' + JSON.stringify(obj));
+      window.location.replace('#' + JSON.stringify(obj, (key, value) => { if (value) return value; }));
     }
   };
 })(window);
