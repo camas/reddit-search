@@ -19,6 +19,7 @@ interface AppState extends SearchSettings {
 export class App extends React.Component<{}, AppState> {
   lastSearch: SearchSettings;
   api: PushshiftAPI;
+  updatedHash: boolean;
 
   constructor(props) {
     super(props);
@@ -39,10 +40,39 @@ export class App extends React.Component<{}, AppState> {
       moreing: false,
     };
     this.api = new PushshiftAPI();
+    this.updatedHash = false;
+  }
+
+  loadLocationHash() {
+    let params = hash_accessor.load();
+    if (params.after) {
+      params.after = new Date(params.after);
+    }
+    if (params.before) {
+      params.before = new Date(params.before);
+    }
+    this.setState(params);
   }
 
   componentDidMount() {
-    // Load stored form data
+    // Add hash change event listener
+    window.addEventListener("hashchange", e => {
+      if (this.updatedHash) {
+        this.updatedHash = false;
+        return;
+      }
+      console.log("location.hash changed. loading new params");
+      this.loadLocationHash();
+    });
+
+    // Check for location hash. Use it if found
+    if (window.location.hash) {
+      this.loadLocationHash();
+      console.log("Loaded params from location.hash");
+      return;
+    }
+
+    // Load stored form data if estsis
     let formDataJson = localStorage.getItem("search-form");
     if (formDataJson !== null) {
       let formData: SearchSettings = JSON.parse(formDataJson);
@@ -54,7 +84,7 @@ export class App extends React.Component<{}, AppState> {
         formData.before = new Date(formData.before);
       }
       this.setState(formData);
-      console.log(formData);
+      console.log("Loaded params from local storage");
     }
   }
 
@@ -120,10 +150,29 @@ export class App extends React.Component<{}, AppState> {
 
   /** Handle the main form being submitted */
   searchSubmit = async (e) => {
+    // Update state
     e.preventDefault();
     this.setState({ error: null, comments: null, posts: null, searching: true });
     this.lastSearch = { ...this.state };
+
+    // Update location.hash
+    let toSave = {
+      author: this.state.author,
+      subreddit: this.state.subreddit,
+      searchFor: this.state.searchFor,
+      resultSize: this.state.resultSize,
+      filter: this.state.filter,
+      after: this.state.after,
+      before: this.state.before,
+      query: this.state.query,
+    };
+    this.updatedHash = true;
+    hash_accessor.save(toSave);
+
+    // Search
     let data = await this.api.query(this.lastSearch);
+
+    // Update state with results
     if (this.lastSearch.searchFor == SearchType.Comments) {
       this.setState({ comments: data.data, searching: false });
     } else if (this.lastSearch.searchFor == SearchType.Posts) {
@@ -322,3 +371,23 @@ export class App extends React.Component<{}, AppState> {
     );
   }
 }
+
+var hash_accessor = (function (window) {
+  return {
+    load: function () {
+      try {
+        // strip ^#
+        var json_str_escaped = window.location.hash.slice(1);
+        // unescape
+        var json_str = decodeURIComponent(json_str_escaped);
+        return JSON.parse(json_str);
+      } catch (e) {
+        return {};
+      }
+    },
+    save: function (obj) {
+      // use replace so that previous url does not go into history
+      window.location.replace('#' + JSON.stringify(obj));
+    }
+  };
+})(window);
