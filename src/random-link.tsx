@@ -14,6 +14,10 @@ export class RandomLink extends React.Component {
     ["Cities of the Future", "https://www.nationalgeographic.com/magazine/2019/04/see-sustainable-future-city-designed-for-people-and-nature/"],
     ["Buy a stock, wait until it goes up, and then sell it. If it doesn't go up, then don't have bought it.", "text"],
     ["https://pbs.twimg.com/media/EQvo8N-UcAEyZcx?format=png"],
+    ["https://www.bouncingdvdlogo.com/"],
+    ["Lemmings in javascript", "https://www.elizium.nu/scripts/lemmings/"],
+    ["https://jspaint.app/"],
+    ["Map of UK greenbelts", "https://alasdair.carto.com/viz/c1925a82-9670-11e4-ab1a-0e853d047bba/embed_map"],
   ];
 
   static entry = RandomLink.links[Math.floor(Math.random() * RandomLink.links.length)];
