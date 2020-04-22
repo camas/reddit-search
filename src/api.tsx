@@ -49,6 +49,7 @@ export class PushshiftAPI {
       endpoint = "submission";
     }
     let url = `https://api.pushshift.io/reddit/${endpoint}/search?${joinedArgs}`;
+    console.log(`Pushshift request ${url}`);
     let resp = await fetch(url);
     let data = await resp.json();
     return [data, url];

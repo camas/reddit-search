@@ -45,7 +45,7 @@ export class App extends React.Component<{}, AppState> {
     this.updatedHash = false;
   }
 
-  loadLocationHash() {
+  loadLocationHash(shouldSearch: boolean = false) {
     let params = hash_accessor.load();
     if (params.after) {
       params.after = new Date(params.after);
@@ -53,7 +53,11 @@ export class App extends React.Component<{}, AppState> {
     if (params.before) {
       params.before = new Date(params.before);
     }
-    this.setState(params);
+    if (shouldSearch) {
+      this.setState(params, this.doSearch);
+    } else {
+      this.setState(params);
+    }
   }
 
   componentDidMount() {
@@ -69,12 +73,12 @@ export class App extends React.Component<{}, AppState> {
 
     // Check for location hash. Use it if found
     if (window.location.hash) {
-      this.loadLocationHash();
+      this.loadLocationHash(true);
       console.log("Loaded params from location.hash");
       return;
     }
 
-    // Load stored form data if estsis
+    // Load stored form data if exists
     let formDataJson = localStorage.getItem("search-form");
     if (formDataJson !== null) {
       let formData: SearchSettings = JSON.parse(formDataJson);
@@ -150,10 +154,7 @@ export class App extends React.Component<{}, AppState> {
     this.setState({ query: e.target.value });
   }
 
-  /** Handle the main form being submitted */
-  searchSubmit = async (e) => {
-    // Update state
-    e.preventDefault();
+  doSearch = async () => {
     this.setState({ error: null, comments: null, posts: null, searching: true });
     this.lastSearch = { ...this.state };
 
@@ -181,6 +182,13 @@ export class App extends React.Component<{}, AppState> {
     } else if (this.lastSearch.searchFor == SearchType.Posts) {
       this.setState({ posts: data.data, searching: false });
     }
+  }
+
+  /** Handle the main form being submitted */
+  searchSubmit = async (e) => {
+    // Update state
+    e.preventDefault();
+    this.doSearch();
   }
 
   /** Handle the more button being clicked. */
