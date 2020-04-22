@@ -253,7 +253,7 @@ export class App extends React.Component<{}, AppState> {
           thumbnailUrl = post.url;
         }
         let body;
-        if (post.selftext.length !== 0) {
+        if (post.selftext && post.selftext.length !== 0) {
           body = <div className="whitespace-pre-wrap">{post.selftext}</div>
         } else {
           body = <a href={post.url}>
