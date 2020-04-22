@@ -13,6 +13,7 @@ interface AppState extends SearchSettings {
   comments: Array<any>,
   posts: Array<any>,
   moreing: boolean,
+  lastUrl: string,
 }
 
 /** Main class for Reddit Search */
@@ -38,6 +39,7 @@ export class App extends React.Component<{}, AppState> {
       comments: null,
       posts: null,
       moreing: false,
+      lastUrl: "",
     };
     this.api = new PushshiftAPI();
     this.updatedHash = false;
@@ -170,7 +172,8 @@ export class App extends React.Component<{}, AppState> {
     hash_accessor.save(toSave);
 
     // Search
-    let data = await this.api.query(this.lastSearch);
+    let [data, url] = await this.api.query(this.lastSearch);
+    this.setState({ lastUrl: url });
 
     // Update state with results
     if (this.lastSearch.searchFor == SearchType.Comments) {
@@ -275,7 +278,7 @@ export class App extends React.Component<{}, AppState> {
     }
     if (this.state.comments || this.state.posts) {
       content = <div className="flex flex-col px-auto max-w-5xl mx-auto">
-        <div className="mx-auto mb-1">{resultCount} results</div>
+        <div className="mx-auto mb-1">{resultCount} results - <a className={linkClass} href={this.state.lastUrl}>Generated API URL</a></div>
         {inner}
         {moreButton}
       </div>
