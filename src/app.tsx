@@ -194,16 +194,19 @@ export class App extends React.Component<{}, AppState> {
   /** Handle the more button being clicked. */
   handleMoreClick = async (e) => {
     this.setState({ error: null, moreing: true });
-    if (this.state.comments) {
+    if (this.state.comments && this.state.comments.length > 0) {
+      console.log(this.state.comments);
       this.lastSearch.before = new Date(this.state.comments[this.state.comments.length - 1].created_utc * 1000);
-    } else if (this.state.posts) {
+    } else if (this.state.posts && this.state.posts.length > 0) {
       this.lastSearch.before = new Date(this.state.posts[this.state.posts.length - 1].created_utc * 1000);
     }
     let data = await this.api.query(this.lastSearch);
-    if (this.lastSearch.searchFor == SearchType.Comments) {
+    if (this.lastSearch.searchFor == SearchType.Comments && data.data) {
       this.setState({ comments: this.state.comments.concat(data.data), moreing: false });
-    } else if (this.lastSearch.searchFor == SearchType.Posts) {
+    } else if (this.lastSearch.searchFor == SearchType.Posts && data.data) {
       this.setState({ posts: this.state.posts.concat(data.data), moreing: false });
+    } else {
+      this.setState({ moreing: false });
     }
   }
 
@@ -221,6 +224,9 @@ export class App extends React.Component<{}, AppState> {
       resultCount = this.state.comments.length;
       // Render comments
       inner = this.state.comments.map((comment) => {
+        if (!comment) {
+          return;
+        }
         let permalink;
         if (comment.permalink) {
           permalink = comment.permalink;
