@@ -196,7 +196,7 @@ export class App extends React.Component<{}, AppState> {
     this.setState({ error: null, moreing: true });
     if (this.state.comments) {
       this.lastSearch.before = new Date(this.state.comments[this.state.comments.length - 1].created_utc * 1000);
-    } else {
+    } else if (this.state.posts) {
       this.lastSearch.before = new Date(this.state.posts[this.state.posts.length - 1].created_utc * 1000);
     }
     let data = await this.api.query(this.lastSearch);
@@ -242,10 +242,13 @@ export class App extends React.Component<{}, AppState> {
           </a>
         </div>
       });
-    } else if (this.state.posts) {
+    } else if (this.state.posts && this.state.posts.length > 0) {
       resultCount = this.state.posts.length;
       // Render posts
       inner = this.state.posts.map((post) => {
+        if (!post) {
+          return;
+        }
         let thumbnailUrl;
         if (post.thumbnail.startsWith('http')) {
           thumbnailUrl = post.thumbnail;
