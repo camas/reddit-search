@@ -50,7 +50,9 @@ export class PushshiftAPI {
     }
     let url = `https://api.pushshift.io/reddit/${endpoint}/search?${joinedArgs}`;
     console.log(`Pushshift request ${url}`);
-    let resp = await fetch(url);
+    let resp = await fetch(url, {
+       referrerPolicy = "no-referrer"
+    });
     let data = await resp.json();
     return [data, url];
   }
