@@ -173,14 +173,18 @@ export class App extends React.Component<{}, AppState> {
     hash_accessor.save(toSave);
 
     // Search
-    let [data, url] = await this.api.query(this.lastSearch);
-    this.setState({ lastUrl: url });
-
-    // Update state with results
-    if (this.lastSearch.searchFor == SearchType.Comments) {
-      this.setState({ comments: data.data, searching: false });
-    } else if (this.lastSearch.searchFor == SearchType.Posts) {
-      this.setState({ posts: data.data, searching: false });
+    try {
+      let [data, url] = await this.api.query(this.lastSearch);
+      this.setState({ lastUrl: url });
+      // Update state with results
+      if (this.lastSearch.searchFor == SearchType.Comments) {
+        this.setState({ comments: data.data, searching: false });
+      } else if (this.lastSearch.searchFor == SearchType.Posts) {
+        this.setState({ posts: data.data, searching: false });
+      }
+    } catch (err) {
+      this.setState({ searching: false });
+      this.setError(String(err));
     }
   }
 
@@ -382,7 +386,10 @@ export class App extends React.Component<{}, AppState> {
           {/* Submit Button and Error text */}
           <button type="submit" className="bg-red-900 hover:bg-red-800 font-bold mt-4 py-2">{this.state.searching ? "Searching..." : "Search"}</button>
           {this.state.error &&
-            <p className="text-red-200 text-center">{this.state.errorTime.toLocaleTimeString()} Error: {this.state.error}</p>
+            <>
+              <p className="text-red-200 text-center">{this.state.errorTime.toLocaleTimeString()} Error: {this.state.error}</p>
+              <p className="text-red-200 text-center"><a href="https://www.reddit.com/r/pushshift/comments/gtkytk/the_pushshift_api_will_be_blocking_any_requests/">See: https://www.reddit.com/r/pushshift/comments/gtkytk/the_pushshift_api_will_be_blocking_any_requests/</a></p>
+            </>
           }
         </form>
         {content}
