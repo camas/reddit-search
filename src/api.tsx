@@ -55,7 +55,7 @@ export class PushshiftAPI {
 
     console.log(`Pushshift request ${url}`);
     let resp = await fetch(url, {
-       referrerPolicy = "no-referrer"
+      referrerPolicy: "no-referrer"
     });
     let data = await resp.json();
     return data;
