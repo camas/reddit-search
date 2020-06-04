@@ -54,7 +54,9 @@ export class PushshiftAPI {
   async query(url: string): Promise<any> {
 
     console.log(`Pushshift request ${url}`);
-    let resp = await fetch(url);
+    let resp = await fetch(url, {
+       referrerPolicy = "no-referrer"
+    });
     let data = await resp.json();
     return data;
   }
