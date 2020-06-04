@@ -174,8 +174,9 @@ export class App extends React.Component<{}, AppState> {
 
     // Search
     try {
-      let [data, url] = await this.api.query(this.lastSearch);
+      let url = this.api.get_url(this.lastSearch);
       this.setState({ lastUrl: url });
+      let data = await this.api.query(url);
       // Update state with results
       if (this.lastSearch.searchFor == SearchType.Comments) {
         this.setState({ comments: data.data, searching: false });
@@ -199,12 +200,12 @@ export class App extends React.Component<{}, AppState> {
   handleMoreClick = async (e) => {
     this.setState({ error: null, moreing: true });
     if (this.state.comments && this.state.comments.length > 0) {
-      console.log(this.state.comments);
       this.lastSearch.before = new Date(this.state.comments[this.state.comments.length - 1].created_utc * 1000);
     } else if (this.state.posts && this.state.posts.length > 0) {
       this.lastSearch.before = new Date(this.state.posts[this.state.posts.length - 1].created_utc * 1000);
     }
-    let data = await this.api.query(this.lastSearch);
+    let url = this.api.get_url(this.lastSearch);
+    let data = await this.api.query(url);
     if (this.lastSearch.searchFor == SearchType.Comments && data.data) {
       this.setState({ comments: this.state.comments.concat(data.data), moreing: false });
     } else if (this.lastSearch.searchFor == SearchType.Posts && data.data) {
@@ -302,6 +303,10 @@ export class App extends React.Component<{}, AppState> {
         <div className="mx-auto mb-1">{resultCount} results - <a className={linkClass} href={this.state.lastUrl}>Generated API URL</a></div>
         {inner}
         {moreButton}
+      </div>
+    } else if (this.state.lastUrl) {
+      content = <div className="flex flex-col px-auto max-w-5xl mx-auto">
+        <div className="mx-auto mb-1"><a className={linkClass} href={this.state.lastUrl}>Generated API URL</a></div>
       </div>
     } else {
       content = <div className="text-center px-4 max-w-5xl mx-auto">

@@ -15,7 +15,7 @@ export interface SearchSettings {
 }
 
 export class PushshiftAPI {
-  async query(settings: SearchSettings): Promise<any> {
+  get_url(settings: SearchSettings): string {
     let args = {
       html_decode: "true",
     };
@@ -48,10 +48,14 @@ export class PushshiftAPI {
     else if (settings.searchFor == SearchType.Posts) {
       endpoint = "submission";
     }
-    let url = `https://api.pushshift.io/reddit/${endpoint}/search?${joinedArgs}`;
+    return `https://api.pushshift.io/reddit/${endpoint}/search?${joinedArgs}`
+  }
+
+  async query(url: string): Promise<any> {
+
     console.log(`Pushshift request ${url}`);
     let resp = await fetch(url);
     let data = await resp.json();
-    return [data, url];
+    return data;
   }
 }
