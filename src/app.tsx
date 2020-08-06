@@ -279,7 +279,7 @@ export class App extends React.Component<{}, AppState> {
             <a href={`https://reddit.com/r/${post.subreddit}`}>
               <div className="text-sm text-red-500">/r/{post.subreddit}</div>
             </a>
-            <a href={`https://reddit.com/r/${post.author}`}>
+            <a href={`https://reddit.com/u/${post.author}`}>
               <div className="text-sm text-red-500 ml-2">/u/{post.author}</div>
             </a>
             <div className="text-sm text-red-500 ml-auto">{new Date(post.created_utc * 1000).toLocaleString()}</div>
