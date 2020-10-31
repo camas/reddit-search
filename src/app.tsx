@@ -393,7 +393,6 @@ export class App extends React.Component<{}, AppState> {
           {this.state.error &&
             <>
               <p className="text-red-200 text-center">{this.state.errorTime.toLocaleTimeString()} Error: {this.state.error}</p>
-              <p className="text-red-200 text-center"><a href="https://www.reddit.com/r/pushshift/comments/gtkytk/the_pushshift_api_will_be_blocking_any_requests/">See: https://www.reddit.com/r/pushshift/comments/gtkytk/the_pushshift_api_will_be_blocking_any_requests/</a></p>
             </>
           }
         </form>
